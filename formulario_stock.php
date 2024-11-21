@@ -6,20 +6,24 @@ if (!isset($_SESSION['usuario'])) {
     header('Location: login.php');
     exit();
 }
+//Si se presionó un boton para modificar un registro
 if (isset($_POST['boton'])) {
+    //Obtner el boton que se presionó
     $botonPresionado = $_POST['boton'];
     if ($botonPresionado != Null) {
-
+        //Iniciar conexión
         $conexion = mysqli_connect("localhost", "root", "", "medical_stats") or
             die("Problemas con la conexión");
-
+        //Obtener ID del boton
         $id = substr($botonPresionado, 5);
-
-
+        //Obtener datos de la tabla de stock de acuerdo al ID que se quiere modificar
         $registros = mysqli_query($conexion, "select * from stock where id = $id;") or
             die("Problemas en el select:" . mysqli_error($conexion));
 
         while ($reg = mysqli_fetch_array($registros)) {
+            //---------------------------------------------------------------------
+            //Armar el formulario con la información del ID que se quiere modificar
+            //---------------------------------------------------------------------
 ?>
 
             <!DOCTYPE html>
@@ -45,14 +49,14 @@ if (isset($_POST['boton'])) {
 
                 <main>
                     <h1>Formulario de Registro</h1>
-                   
+
                     <div class="form-container">
                         <form action="insertar_stock.php" method="post">
 
                             <input type="hidden" id="id" name="id" <?php echo "value='" . $reg['id'] . "'"; ?>>
 
                             <label for="nombre">Nombre</label>
-                            <input type="text" id="nombre" name="nombre"  <?php echo "value='" . $reg['nombre'] . "'"; ?> required>
+                            <input type="text" id="nombre" name="nombre" <?php echo "value='" . $reg['nombre'] . "'"; ?> required>
 
                             <label for="cantidad">cantidad:</label>
                             <input type="text" id="cantidad" name="cantidad" <?php echo "value='" . $reg['cantidad'] . "'"; ?> required>
@@ -68,6 +72,10 @@ if (isset($_POST['boton'])) {
         }
     }
 } else {
+    // Si NO se quiere modificar un registro, se quiere crear uno nuevo
+    //---------------------------------------------------------------------
+    //Armar el formulario HTML Vacío
+    //---------------------------------------------------------------------
         ?>
 
         <!DOCTYPE html>
@@ -94,7 +102,7 @@ if (isset($_POST['boton'])) {
 
             <main>
                 <h1>Formulario de Control de Stock</h1>
-           
+
                 <div class="form-container">
                     <form action="insertar_stock.php" method="POST">
 
