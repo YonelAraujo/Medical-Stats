@@ -10,11 +10,10 @@ if (isset($_POST['username']) && isset($_POST['password'])) {
         header("Location: login.php");
         exit();
     } else {
-        $registros = mysqli_query($conexion, "select * from usuarios where usuario = '$user'") or die("Error de conexion" . mysqli_error($conexion));
+        $registros = mysqli_query($conexion, "SELECT * FROM usuarios WHERE usuario = '$user'") or die("Error de conexión" . mysqli_error($conexion));
         if ($reg = mysqli_fetch_array($registros)) {
             if ($pass == $reg['contrasena']) {
                 $_SESSION['usuario'] = $user;
-                //header('Location: pagina.php');
             } else {
                 $_SESSION['error'] = "Usuario o contraseña incorrecto";
                 header("Location: login.php");
@@ -28,11 +27,15 @@ if (isset($_POST['username']) && isset($_POST['password'])) {
     }
 }
 
+
 $fecha_inicio = isset($_POST['fecha_inicio']) ? $_POST['fecha_inicio'] : '2000-01-01';
 $fecha_fin = isset($_POST['fecha_fin']) ? $_POST['fecha_fin'] : date('Y-m-d');
 
 // Realizar la consulta para obtener los procedimientos y su cantidad
-$sql = "SELECT procedimiento, COUNT(*) as cantidad FROM pacientes WHERE fecha BETWEEN '$fecha_inicio' AND '$fecha_fin' GROUP BY procedimiento";
+$sql = "SELECT procedimiento, COUNT(*) as cantidad, SUM(CASE WHEN urgencia = 1 THEN 1 ELSE 0 END) as urgencias 
+        FROM pacientes 
+        WHERE fecha BETWEEN '$fecha_inicio' AND '$fecha_fin' 
+        GROUP BY procedimiento";
 $result = mysqli_query($conexion, $sql) or die("Problemas en el select:" . mysqli_error($conexion));
 
 $data = [];
@@ -45,11 +48,9 @@ if ($result->num_rows > 0) {
 }
 
 $search_results = [];
-// Si el formulario de búsqueda es enviado
 if (isset($_POST['submit'])) {
     $search = $_POST['search'];
     
-    // Consulta SQL para buscar por DNI, nombre o procedimiento y mostrar todos los datos
     $sql_search = "SELECT * FROM pacientes WHERE dni LIKE '%$search%' OR nombre LIKE '%$search%' OR procedimiento LIKE '%$search%'";
     $result_search = mysqli_query($conexion, $sql_search) or die("Problemas en el select:" . mysqli_error($conexion));
     
@@ -71,9 +72,10 @@ if (isset($_POST['submit'])) {
                 <th>Instrumentador</th>
                 <th>Anestesista</th>
                 <th>Tipo anestesia</th>
+                <th>Urgencia</th>
               </tr></thead>";
         while($row = $result_search->fetch_assoc()) {
-            $search_results[] = $row; // Guardar los resultados de la búsqueda
+            $search_results[] = $row;
             $tabla_resultados .= "
                 <tr>
                     <td>{$row['id']}</td>
@@ -89,7 +91,8 @@ if (isset($_POST['submit'])) {
                     <td>{$row['2_Ayudante']}</td>
                     <td>{$row['instrumentador']}</td>
                     <td>{$row['anestesista']}</td>
-                    <td>{$row['tipo_anestesia']}</td>
+                    <td>{$row['tipo_anestesia']}</td> 
+                    <td>{$row['urgencia']}</td>
                 </tr>";
         }
         $tabla_resultados .= "</table></div>";
@@ -113,7 +116,7 @@ mysqli_close($conexion);
     <nav>
         <ul>
             <li><a href="pagina.php">Inicio</a></li>
-            <li><a href="control.php">Control de Stock</a></li>
+            <li><a href="stock.php">Control de Stock</a></li>
             <li><a href="pagina.php"><img src="LogoB.png" alt="Logo" class="logo"></a></li>
             <li><a href="estadistica.php">Estadística</a></li>
             <li><a href="salir.php"><img src='CerrarSesion.png' width='35' height='35' alt='CerrarSesion'></a></li>
@@ -133,22 +136,47 @@ mysqli_close($conexion);
             var chartData = <?php echo json_encode($data); ?>;
             var labels = chartData.map(function(e) { return e.procedimiento; });
             var values = chartData.map(function(e) { return e.cantidad; });
-            var myChart = new Chart(ctx, {
-                type: 'bar',
+            var urgencias = chartData.map(function(e) { return e.urgencias; });
+
+            // Debugging output
+            console.log("Labels: ", labels); // Para depuración
+            console.log("Values: ", values); // Para depuración
+            console.log("Urgencias: ", urgencias); // Para depuración
+
+            // Ajustar la configuración del gráfico
+            var myChart = new Chart(ctx, {  
+                type: 'bar', // Cambia el tipo de gráfico a 'bar'
                 data: {
                     labels: labels,
-                    datasets: [{
+                    datasets: [
+                    {
                         label: 'Cantidad de Procedimientos',
                         data: values,
-                        backgroundColor: 'rgba(75, 192, 192, 0.2)',
-                        borderColor: 'rgba(75, 192, 192, 1)',
+                        backgroundColor: 'rgba(0, 123, 255, 0.5)', // color azul
+                        borderColor: 'rgba(0, 123, 255, 1)',
                         borderWidth: 1
-                    }]
+                    },
+                    {
+                        label: 'Urgencias',
+                        data: urgencias,
+                        type: 'line',
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)', // color rojo
+                        borderColor: 'rgba(255, 99, 132, 1)',
+                        borderWidth: 2,
+                        fill: false,
+                        pointRadius: 5,
+                        pointHoverRadius: 7,
+                        lineTension: 0
+                    }
+                    ]
                 },
                 options: {
                     scales: {
                         y: {
-                            beginAtZero: true
+                            beginAtZero: true,
+                            ticks: {
+                                beginAtZero: true // Asegura que el eje Y comience en 0
+                            }
                         }
                     }
                 }
