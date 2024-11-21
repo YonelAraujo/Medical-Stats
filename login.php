@@ -1,29 +1,37 @@
 <?php
 session_start();
+// Crear conexión
 $conexion = mysqli_connect("localhost", "root", "", "medical_stats") or die("Problemas con la conexión");
 
+//Verificar si ya intentó loguearse
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_POST['username']) && isset($_POST['password'])) {
+    //Si ya se intentó loguear
     $user = $_POST['username'];
     $pass = $_POST['password'];
-
+    //Verificar que el usuario y contraseña no estén vacíos
     if (empty($user) || empty($pass)) {
         $_SESSION['error'] = "Usuario o contraseña no pueden estar vacíos.";
         header("Location: login.php");
         exit();
-    } else {
+    } else { //Si no estan vacíos 
+        //Obtener información del usuario de la BD
         $registros = mysqli_query($conexion, "SELECT * FROM usuarios WHERE usuario = '$user'") or die("Error de conexion" . mysqli_error($conexion));
-
+        //Si el usuario existe
         if ($reg = mysqli_fetch_array($registros)) {
+            //Verificar que la contraseña sea correcta
             if ($pass == $reg['contrasena']) {
+                //Si la contraseña es correcta, inicia sesión de usuario
                 $_SESSION['usuario'] = $user;
                 header('Location: pagina.php'); // Redirige a la página principal después del login exitoso
                 exit();
             } else {
+                //Si la contraseña es correcta, devuelve error
                 $_SESSION['error'] = "Usuario o contraseña incorrecto";
                 header("Location: login.php");
                 exit();
             }
         } else {
+            //Si el usuario no existe devuelve error
             $_SESSION['error'] = "Usuario no encontrado.";
             header("Location: login.php");
             exit();
@@ -37,7 +45,7 @@ if (isset($_SESSION['error'])) {
     unset($_SESSION['error']);
 }
 ?>
-
+<!-- HTML con el formulario de Login-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
