@@ -10,11 +10,10 @@ if (!isset($_SESSION['usuario'])) {
 $conexion = mysqli_connect("localhost", "root", "", "medical_stats") or
     die("Problemas con la conexión");
 
- 
 
 if (isset($_POST['accion'])) {
     $accion = $_POST['accion'];
-    
+
     // Extraer el ID del producto de la acción
     $operacion = explode('_', $accion);
     $tipo_accion = $operacion[0]; // "sumar" o "restar"
@@ -29,11 +28,10 @@ if (isset($_POST['accion'])) {
     // Determinar la nueva cantidad
     if ($tipo_accion == 'sumar') {
         $nueva_cantidad = $cantidad_actual + 1;
-        
+
         // Actualizar la cantidad en la base de datos
         $update_query = "UPDATE stock SET cantidad = $nueva_cantidad WHERE id = $id";
         mysqli_query($conexion, $update_query) or die("Error al actualizar la cantidad: " . mysqli_error($conexion));
-
     } elseif ($tipo_accion == 'restar' && $cantidad_actual > 0) {
         $nueva_cantidad = $cantidad_actual - 1;
 
@@ -57,5 +55,3 @@ if (isset($_POST['accion'])) {
 // Redirigir de vuelta a la página de stock
 header("Location: stock.php");
 exit;
-?>
-
